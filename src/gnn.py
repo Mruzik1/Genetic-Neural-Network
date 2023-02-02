@@ -9,6 +9,7 @@ CLASSES_COUNT = 4
 FEATURES_COUNT = 2
 
 X, y = make_blobs(200, cluster_std=1.3, centers=CLASSES_COUNT, n_features=FEATURES_COUNT)
+y = np.array([[0 if j != i else 1 for j in range(np.max(y)+1)] for i in y])
 
 
 # plotting the data
@@ -46,7 +47,17 @@ class NN:
     def softmax(self, x: np.ndarray) -> np.ndarray:
         return np.array([np.e**i/np.sum(np.e**x) for i in x])
 
+    # cross-entropy loss, fitness function respectively
+    def cross_entropy(self, prediction: np.ndarray, labels: np.ndarray) -> np.ndarray:
+        return -np.sum(labels*np.log(prediction) + (1-labels)*np.log(1-prediction))
+
+    # get multiple predictions, 
+    def __call__(self, features: np.ndarray, labels: np.ndarray) -> np.ndarray:
+        pred = np.array([self.feedforward(i) for i in features])
+        return pred, np.mean(np.array([self.cross_entropy(p, l) for p, l in zip(pred, labels)]))
+
 
 if __name__ == '__main__':
     model = NN()
-    pprint(model.feedforward(X[0]))
+    pred, loss = model(X, y)
+    pprint(loss)
