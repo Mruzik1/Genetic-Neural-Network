@@ -2,21 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from random import random, choices
 from sklearn.datasets import make_blobs
-from pprint import pprint
 
 
 # generating data using the blobs function :^)
 CLASSES_COUNT = 4
 FEATURES_COUNT = 2
 
-X, y = make_blobs(200, cluster_std=1.3, centers=CLASSES_COUNT, n_features=FEATURES_COUNT)
-y = np.array([[0 if j != i else 1 for j in range(np.max(y)+1)] for i in y])
-
-
-# plotting the data
-# plt.figure(figsize=(10, 8))
-# plt.scatter(X[:, 0], X[:, 1], c=y)
-# plt.show()
+X, old_y = make_blobs(200, cluster_std=1.3, centers=CLASSES_COUNT, n_features=FEATURES_COUNT)
+y = np.array([[0 if j != i else 1 for j in range(np.max(old_y)+1)] for i in old_y])
 
 
 # linear layer class
@@ -67,12 +60,14 @@ class NN:
 
 # GA class
 class GA:
-    def __init__(self, pop_size: int, features: np.ndarray, labels: np.ndarray, selector: int):
+    def __init__(self, pop_size: int, features: np.ndarray, labels: np.ndarray,
+                 selector: int, mutation_chance: float):
         self.population = [NN() for _ in range(pop_size)]
         self.pop_size = pop_size
         self.features = features
         self.labels = labels
         self.selector = selector
+        self.mutation_chance = mutation_chance
     
     # performing uniform crossover on weights and biases
     def uniform_crossover(self, p1: NN, p2: NN, prob: float) -> NN:
@@ -85,7 +80,24 @@ class GA:
             for j, _ in enumerate(child.biases[i]):
                 child.biases[i][j] = p1.biases[i][j] if random() > prob\
                                       else p2.biases[i][j]
+        
+        if self.mutation_chance > random():
+            self.mutation(child)
+        
         return child
+
+    # performing mutation (randomly change some weights)
+    def mutation(self, ind: NN):
+        w_idx = np.random.randint(len(ind.weights))
+        b_idx = np.random.randint(len(ind.biases))
+
+        for i, _ in enumerate(ind.weights[w_idx]):
+            if random() > 0.6:
+                ind.weights[w_idx][i] = np.random.normal()
+
+        for i, _ in enumerate(ind.biases[b_idx]):
+            if random() > 0.6:
+                ind.biases[b_idx][i] = np.random.normal()
     
     # getting fitness scores
     def get_scores(self) -> np.ndarray:
@@ -109,11 +121,31 @@ class GA:
             parent1, parent2 = self.choose_parents()
             yield self.uniform_crossover(parent1, parent2, 0.5)
 
+    # plotting
+    def draw(self, axs):
+        pred = self.population[-1](self.features, self.labels)[0]
+        pred = np.array([np.argmax(i) for i in pred])
+
+        _, axs = plt.subplots(2, 1, figsize=(10, 8))
+
+        axs[0].scatter(X[:, 0], X[:, 1], c=old_y)
+        axs[0].set_title('Actual')
+
+        axs[1].scatter(X[:, 0], X[:, 1], c=pred)
+        axs[1].set_title('Predictions')
+        
+        plt.draw()
+        plt.pause(0.1)
+
     # starts evolving k-times
-    def start(self, k: int) -> list[NN]:
-        for _ in range(k):
-            print(self.get_scores())
+    def start(self, k: int) -> list[NN]: 
+
+
+        for i in range(k):
+            print(f'{i}) Mean loss: {np.mean(self.get_scores())}')
+
             self.selection()
+            self.draw()
 
             offsprings = list(self.perform_crossover(self.pop_size-len(self.population)))
             self.population += offsprings
@@ -122,5 +154,16 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(20, X, y, 10)
-    ga.start(10)
+    ga = GA(20, X, y, 10, 0.15)
+    pred, loss = ga.start(30)[-1](X, y)
+    pred = np.array([np.argmax(i) for i in pred])
+
+    _, axs = plt.subplots(2, 1, figsize=(10, 8))
+
+    axs[0].scatter(X[:, 0], X[:, 1], c=old_y)
+    axs[0].set_title('Actual')
+
+    axs[1].scatter(X[:, 0], X[:, 1], c=pred)
+    axs[1].set_title('Predictions')
+
+    plt.show()
