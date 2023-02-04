@@ -73,6 +73,7 @@ class GA:
         self.labels = labels
         self.selector = selector
         self.mutation_chance = mutation_chance
+        self.history = {'mean': [], 'min': []}
     
     # performing uniform crossover on weights and biases
     def uniform_crossover(self, p1: NN, p2: NN, prob: float) -> NN:
@@ -141,12 +142,15 @@ class GA:
 
     # starts evolving k-times
     def start(self, k: int) -> list[NN]: 
-        ax = plt.subplot()
+        # ax = plt.subplot()
 
         for i in range(k):
-            print(f'{i}) Mean loss: {np.mean(self.get_scores())}')
+            scores = self.get_scores()
+            self.history['mean'].append(np.mean(scores))
+            self.history['min'].append(np.min(scores))
+            print(f'{i}) Mean loss: {np.mean(scores)}')
 
-            self.draw(ax)
+            # self.draw(ax)
             self.selection()
 
             offsprings = list(self.perform_crossover(self.pop_size-len(self.population)))
@@ -170,6 +174,16 @@ def get_decision_boundary(model: NN, features: np.ndarray) -> tuple[np.ndarray]:
 
 if __name__ == '__main__':
     ga = GA(30, X, y, 15, 0.2)
-    best_pop = ga.start(100)
-
     ga.draw(plt.subplot(), update=False)
+    best_pop = ga.start(35)
+
+    ax = plt.subplot()
+    ax.figure.set_figwidth(12)
+    ax.figure.set_figheight(8)
+
+    ax.plot(ga.history['mean'])
+    ax.plot(ga.history['min'])
+    ax.legend(('Mean Loss', 'Min Loss'))
+    ax.set(xlabel='Generation', ylabel='Fitness Score')
+
+    plt.show()
