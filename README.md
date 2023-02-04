@@ -18,7 +18,7 @@ And since the data (blobs) is linearly separable, the neural network was perform
     As a fitness function I use Cross Entropy Loss that belongs to the NN class (cross_entropy method).
 
 ## Visualized Evolving Process
-Some plotting to demonstrate a decision boundary while evolving.
+Some plotting to demonstrate a decision boundary during the evolving process.
 - **Generations:** *35*
 - **Pop size:** *30*
 - **Selector (how many individuals will be substituted):** *15*
