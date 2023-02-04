@@ -126,15 +126,16 @@ class GA:
 
     # plotting
     def draw(self, ax: plt.Axes, update: bool = True):
-        ax.contourf(*get_decision_boundary(self.population[-1], self.features), cmap='PRGn')
+        ax.contourf(*get_decision_boundary(self.population[-1], self.features), alpha=0.2)
         ax.scatter(X[:, 0], X[:, 1], c=old_y)
         ax.set_label('Decision Boundary')
         
-        ax.figure.set_figwidth(10)
+        ax.figure.set_figwidth(12)
         ax.figure.set_figheight(8)
 
         plt.draw() if update else plt.show()
         plt.pause(0.01)
+        plt.cla()
 
     # starts evolving k-times
     def start(self, k: int) -> list[NN]: 
@@ -166,7 +167,7 @@ def get_decision_boundary(model: NN, features: np.ndarray) -> tuple[np.ndarray]:
 
 
 if __name__ == '__main__':
-    ga = GA(20, X, y, 10, 0.15)
-    best_pop = ga.start(3)
+    ga = GA(30, X, y, 15, 0.15)
+    best_pop = ga.start(100)
 
     ga.draw(plt.subplot(), update=False)
