@@ -5,10 +5,10 @@ from sklearn.datasets import make_blobs
 
 
 # generating data using the blobs function :^)
-CLASSES_COUNT = 3
+CLASSES_COUNT = 4
 FEATURES_COUNT = 2
 
-X, old_y = make_blobs(200, cluster_std=1.3, centers=CLASSES_COUNT, n_features=FEATURES_COUNT)
+X, old_y = make_blobs(600, cluster_std=1.3, centers=CLASSES_COUNT, n_features=FEATURES_COUNT)
 y = np.array([[0 if j != i else 1 for j in range(np.max(old_y)+1)] for i in old_y])
 
 
@@ -39,8 +39,10 @@ class NN:
 
     # forward propagation
     def feedforward(self, x: np.ndarray) -> np.ndarray:
-        x = self.relu(self.linear1(x))
-        x = self.relu(self.linear2(x))
+        # x = self.relu(self.linear1(x))
+        # x = self.relu(self.linear2(x))
+        x = self.linear1(x)
+        x = self.linear2(x)
         return self.softmax(self.linear3(x))
 
     # ReLU activation function
@@ -144,8 +146,8 @@ class GA:
         for i in range(k):
             print(f'{i}) Mean loss: {np.mean(self.get_scores())}')
 
-            self.selection()
             self.draw(ax)
+            self.selection()
 
             offsprings = list(self.perform_crossover(self.pop_size-len(self.population)))
             self.population += offsprings
@@ -167,7 +169,7 @@ def get_decision_boundary(model: NN, features: np.ndarray) -> tuple[np.ndarray]:
 
 
 if __name__ == '__main__':
-    ga = GA(30, X, y, 15, 0.15)
+    ga = GA(30, X, y, 15, 0.2)
     best_pop = ga.start(100)
 
     ga.draw(plt.subplot(), update=False)
