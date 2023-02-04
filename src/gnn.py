@@ -22,7 +22,7 @@ class Linear:
     def __call__(self, features: np.ndarray) -> np.ndarray:
         return np.dot(features, self.w) + self.b
 
-    # getting views of weights
+    # getting views of weights (flatten)
     def get_weights(self) -> np.ndarray:
         return self.w.view().reshape(self.w.size)
 
@@ -30,15 +30,18 @@ class Linear:
 # neural network class (with static parameters)
 class NN:
     def __init__(self):
-        self.linear1 = Linear(FEATURES_COUNT, 5)
-        self.linear2 = Linear(5, CLASSES_COUNT)
+        self.linear1 = Linear(FEATURES_COUNT, 8)
+        self.linear2 = Linear(8, 8)
+        self.linear3 = Linear(8, CLASSES_COUNT)
         
-        self.weights = [self.linear1.get_weights(), self.linear2.get_weights()]
-        self.biases = [self.linear1.b, self.linear2.b]
+        self.weights = [self.linear1.get_weights(), self.linear2.get_weights(), self.linear3.get_weights()]
+        self.biases = [self.linear1.b, self.linear2.b, self.linear3.b]
 
     # forward propagation
     def feedforward(self, x: np.ndarray) -> np.ndarray:
-        return self.softmax(self.linear2(self.relu(self.linear1(x))))
+        x = self.relu(self.linear1(x))
+        x = self.relu(self.linear2(x))
+        return self.softmax(self.linear3(x))
 
     # ReLU activation function
     def relu(self, x: np.ndarray) -> np.ndarray:
@@ -122,11 +125,9 @@ class GA:
             yield self.uniform_crossover(parent1, parent2, 0.5)
 
     # plotting
-    def draw(self, axs):
+    def draw(self, axs: np.ndarray):
         pred = self.population[-1](self.features, self.labels)[0]
         pred = np.array([np.argmax(i) for i in pred])
-
-        _, axs = plt.subplots(2, 1, figsize=(10, 8))
 
         axs[0].scatter(X[:, 0], X[:, 1], c=old_y)
         axs[0].set_title('Actual')
@@ -139,13 +140,13 @@ class GA:
 
     # starts evolving k-times
     def start(self, k: int) -> list[NN]: 
-
+        _, axs = plt.subplots(2, 1, figsize=(10, 8))
 
         for i in range(k):
             print(f'{i}) Mean loss: {np.mean(self.get_scores())}')
 
             self.selection()
-            self.draw()
+            self.draw(axs)
 
             offsprings = list(self.perform_crossover(self.pop_size-len(self.population)))
             self.population += offsprings
@@ -153,17 +154,19 @@ class GA:
         return self.population
 
 
+# returns decision boundary mapping
+def get_decision_boundary(model: NN, features: np.ndarray) -> tuple[np.ndarray]:
+    xx, yy = np.meshgrid(np.linspace(features[:, 0].min(), features[:, 0].max(), len(features)//2),
+                         np.linspace(features[:, 1].min(), features[:, 1].max(), len(features)//2))
+
+    new_features = np.column_stack((xx.flatten(), yy.flatten()))
+    
+    predictions = np.round(model(new_features))
+    predictions = predictions.reshape(xx.shape).detach().numpy()
+
+    return xx, yy, predictions
+
+
 if __name__ == '__main__':
     ga = GA(20, X, y, 10, 0.15)
-    pred, loss = ga.start(30)[-1](X, y)
-    pred = np.array([np.argmax(i) for i in pred])
-
-    _, axs = plt.subplots(2, 1, figsize=(10, 8))
-
-    axs[0].scatter(X[:, 0], X[:, 1], c=old_y)
-    axs[0].set_title('Actual')
-
-    axs[1].scatter(X[:, 0], X[:, 1], c=pred)
-    axs[1].set_title('Predictions')
-
-    plt.show()
+    best_pop = ga.start(30)
