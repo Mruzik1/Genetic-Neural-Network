@@ -5,7 +5,7 @@ from sklearn.datasets import make_blobs
 
 
 # generating data using the blobs function :^)
-CLASSES_COUNT = 4
+CLASSES_COUNT = 3
 FEATURES_COUNT = 2
 
 X, old_y = make_blobs(200, cluster_std=1.3, centers=CLASSES_COUNT, n_features=FEATURES_COUNT)
@@ -125,28 +125,26 @@ class GA:
             yield self.uniform_crossover(parent1, parent2, 0.5)
 
     # plotting
-    def draw(self, axs: np.ndarray):
-        pred = self.population[-1](self.features, self.labels)[0]
-        pred = np.array([np.argmax(i) for i in pred])
-
-        axs[0].scatter(X[:, 0], X[:, 1], c=old_y)
-        axs[0].set_title('Actual')
-
-        axs[1].scatter(X[:, 0], X[:, 1], c=pred)
-        axs[1].set_title('Predictions')
+    def draw(self, ax: plt.Axes, update: bool = True):
+        ax.contourf(*get_decision_boundary(self.population[-1], self.features), cmap='PRGn')
+        ax.scatter(X[:, 0], X[:, 1], c=old_y)
+        ax.set_label('Decision Boundary')
         
-        plt.draw()
-        plt.pause(0.1)
+        ax.figure.set_figwidth(10)
+        ax.figure.set_figheight(8)
+
+        plt.draw() if update else plt.show()
+        plt.pause(0.01)
 
     # starts evolving k-times
     def start(self, k: int) -> list[NN]: 
-        _, axs = plt.subplots(2, 1, figsize=(10, 8))
+        ax = plt.subplot()
 
         for i in range(k):
             print(f'{i}) Mean loss: {np.mean(self.get_scores())}')
 
             self.selection()
-            self.draw(axs)
+            self.draw(ax)
 
             offsprings = list(self.perform_crossover(self.pop_size-len(self.population)))
             self.population += offsprings
@@ -161,12 +159,14 @@ def get_decision_boundary(model: NN, features: np.ndarray) -> tuple[np.ndarray]:
 
     new_features = np.column_stack((xx.flatten(), yy.flatten()))
     
-    predictions = np.round(model(new_features))
-    predictions = predictions.reshape(xx.shape).detach().numpy()
+    predictions = np.argmax(model(new_features, y)[0], axis=1)
+    predictions = predictions.reshape(xx.shape)
 
     return xx, yy, predictions
 
 
 if __name__ == '__main__':
     ga = GA(20, X, y, 10, 0.15)
-    best_pop = ga.start(30)
+    best_pop = ga.start(3)
+
+    ga.draw(plt.subplot(), update=False)
