@@ -44,3 +44,4 @@ Here is a visualization of mean and min losses during the evolving. According to
 In my opinion, there're not many suitable cases to use GNN (honestly, I can't come up with any at all, but maybe it's due to the lack of experience). For mostly every problem you can use either GA or NN. Also it's possible to define most optimal hyperparameters for NN using GA. But replacing the backpropagation mechanism with GA is not a good idea I think.
 
 <br />*P.S. The code is quite messy since I was planning this project as a little experiment, even though every function/method got my comments on its functionality :)*
+<br />*P.P.S I've just found out that GNN is frequently used in games and funny AI YT videos (where AI learns to play Flappy Bird or Trackmania for instance). So here's one of the cases :D*
